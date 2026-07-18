@@ -1,13 +1,14 @@
-/* =========================================================
+/* ==========================================================
    AYANSH OVERSEAS LLP
    Premium Website Script
-========================================================= */
+   Version : 1.0
+========================================================== */
 
 "use strict";
 
-/* =========================================================
+/* ==========================================================
    DOM READY
-========================================================= */
+========================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -15,16 +16,24 @@ document.addEventListener("DOMContentLoaded", () => {
     initStickyNavbar();
     initMobileMenu();
     initSmoothScroll();
+
+    /* Part 2 */
     initRevealAnimation();
     initCounterAnimation();
     initFaq();
     initBackToTop();
+    initActiveNavigation();
+
+    /* Part 3 */
+    initScrollProgress();
+    initHeroParallax();
+    initButtonRipple();
 
 });
 
-/* =========================================================
+/* ==========================================================
    LOADER
-========================================================= */
+========================================================== */
 
 function initLoader() {
 
@@ -35,7 +44,6 @@ function initLoader() {
     window.addEventListener("load", () => {
 
         loader.style.opacity = "0";
-
         loader.style.visibility = "hidden";
 
         setTimeout(() => {
@@ -48,9 +56,9 @@ function initLoader() {
 
 }
 
-/* =========================================================
-   STICKY HEADER
-========================================================= */
+/* ==========================================================
+   STICKY NAVBAR
+========================================================== */
 
 function initStickyNavbar() {
 
@@ -58,7 +66,7 @@ function initStickyNavbar() {
 
     if (!header) return;
 
-    window.addEventListener("scroll", () => {
+    function updateHeader() {
 
         if (window.scrollY > 80) {
 
@@ -70,61 +78,93 @@ function initStickyNavbar() {
 
         }
 
-    });
+    }
+
+    updateHeader();
+
+    window.addEventListener("scroll", updateHeader);
 
 }
 
-/* =========================================================
+/* ==========================================================
    MOBILE MENU
-========================================================= */
+========================================================== */
 
 function initMobileMenu() {
 
-    const menuButton = document.querySelector(".menu-toggle");
+    const toggle = document.querySelector(".menu-toggle");
     const nav = document.querySelector(".nav-links");
 
-    if (!menuButton || !nav) return;
+    if (!toggle || !nav) return;
 
-    menuButton.addEventListener("click", () => {
+    toggle.addEventListener("click", () => {
 
+        toggle.classList.toggle("active");
         nav.classList.toggle("active");
-        menuButton.classList.toggle("active");
+
+        document.body.classList.toggle("menu-open");
 
     });
 
-    document.querySelectorAll(".nav-links a").forEach(link => {
+    nav.querySelectorAll("a").forEach(link => {
 
         link.addEventListener("click", () => {
 
+            toggle.classList.remove("active");
             nav.classList.remove("active");
-            menuButton.classList.remove("active");
+            document.body.classList.remove("menu-open");
 
         });
 
     });
 
+    document.addEventListener("click", (event) => {
+
+        if (
+            !nav.contains(event.target) &&
+            !toggle.contains(event.target)
+        ) {
+
+            toggle.classList.remove("active");
+            nav.classList.remove("active");
+            document.body.classList.remove("menu-open");
+
+        }
+
+    });
+
 }
 
-/* =========================================================
+/* ==========================================================
    SMOOTH SCROLL
-========================================================= */
+========================================================== */
 
 function initSmoothScroll() {
 
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    const links = document.querySelectorAll('a[href^="#"]');
 
-        anchor.addEventListener("click", function (e) {
+    links.forEach(link => {
 
-            const target = document.querySelector(this.getAttribute("href"));
+        link.addEventListener("click", function (e) {
+
+            const target = document.querySelector(
+                this.getAttribute("href")
+            );
 
             if (!target) return;
 
             e.preventDefault();
 
-            target.scrollIntoView({
+            const headerHeight =
+                document.querySelector("header")?.offsetHeight || 0;
 
-                behavior: "smooth",
-                block: "start"
+            const offset =
+                target.offsetTop - headerHeight;
+
+            window.scrollTo({
+
+                top: offset,
+                behavior: "smooth"
 
             });
 
@@ -134,21 +174,25 @@ function initSmoothScroll() {
 
 }
 
-/* =========================================================
-   SCROLL REVEAL
-========================================================= */
+/* ==========================================================
+   SCROLL REVEAL ANIMATION
+========================================================== */
 
 function initRevealAnimation() {
 
-    const items = document.querySelectorAll(
-
-        ".card,.section-title,.timeline-item,.about-image,.about-content"
-
+    const elements = document.querySelectorAll(
+        ".card, .section-title, .timeline-item, .about-image, .about-content, .stat-card, .testimonial-card"
     );
 
-    items.forEach(item => item.classList.add("reveal"));
+    if (!elements.length) return;
 
-    const observer = new IntersectionObserver(entries => {
+    elements.forEach(element => {
+
+        element.classList.add("reveal");
+
+    });
+
+    const observer = new IntersectionObserver((entries, observer) => {
 
         entries.forEach(entry => {
 
@@ -156,23 +200,29 @@ function initRevealAnimation() {
 
                 entry.target.classList.add("active");
 
+                observer.unobserve(entry.target);
+
             }
 
         });
 
     }, {
 
-        threshold: .15
+        threshold: 0.15
 
     });
 
-    items.forEach(item => observer.observe(item));
+    elements.forEach(element => {
+
+        observer.observe(element);
+
+    });
 
 }
 
-/* =========================================================
+/* ==========================================================
    COUNTER ANIMATION
-========================================================= */
+========================================================== */
 
 function initCounterAnimation() {
 
@@ -180,7 +230,7 @@ function initCounterAnimation() {
 
     if (!counters.length) return;
 
-    const observer = new IntersectionObserver(entries => {
+    const observer = new IntersectionObserver((entries, observer) => {
 
         entries.forEach(entry => {
 
@@ -190,53 +240,63 @@ function initCounterAnimation() {
 
             const target = Number(counter.dataset.target);
 
-            const duration = 1800;
+            let current = 0;
 
-            const start = performance.now();
+            const increment = Math.max(1, Math.ceil(target / 120));
 
-            function animate(time) {
+            const timer = setInterval(() => {
 
-                const progress = Math.min((time - start) / duration, 1);
+                current += increment;
 
-                const value = Math.floor(progress * target);
+                if (current >= target) {
 
-                counter.textContent = value.toLocaleString() + "+";
+                    current = target;
 
-                if (progress < 1) {
-
-                    requestAnimationFrame(animate);
+                    clearInterval(timer);
 
                 }
 
-            }
+                counter.textContent = current.toLocaleString() + "+";
 
-            requestAnimationFrame(animate);
+            }, 18);
 
             observer.unobserve(counter);
 
         });
 
+    }, {
+
+        threshold: 0.4
+
     });
 
-    counters.forEach(counter => observer.observe(counter));
+    counters.forEach(counter => {
+
+        observer.observe(counter);
+
+    });
 
 }
 
-/* =========================================================
+/* ==========================================================
    FAQ ACCORDION
-========================================================= */
+========================================================== */
 
 function initFaq() {
 
-    const faqItems = document.querySelectorAll(".faq-item");
+    const items = document.querySelectorAll(".faq-item");
 
-    faqItems.forEach(item => {
+    if (!items.length) return;
+
+    items.forEach(item => {
 
         const button = item.querySelector(".faq-question");
 
+        if (!button) return;
+
         button.addEventListener("click", () => {
 
-            faqItems.forEach(faq => {
+            items.forEach(faq => {
 
                 if (faq !== item) {
 
@@ -254,9 +314,9 @@ function initFaq() {
 
 }
 
-/* =========================================================
+/* ==========================================================
    BACK TO TOP
-========================================================= */
+========================================================== */
 
 function initBackToTop() {
 
@@ -264,25 +324,28 @@ function initBackToTop() {
 
     if (!button) return;
 
-    window.addEventListener("scroll", () => {
+    function updateButton() {
 
-        if (window.scrollY > 600) {
+        button.classList.toggle(
 
-            button.classList.add("show");
+            "show",
 
-        } else {
+            window.scrollY > 600
 
-            button.classList.remove("show");
+        );
 
-        }
+    }
 
-    });
+    updateButton();
+
+    window.addEventListener("scroll", updateButton);
 
     button.addEventListener("click", () => {
 
         window.scrollTo({
 
             top: 0,
+
             behavior: "smooth"
 
         });
@@ -291,39 +354,259 @@ function initBackToTop() {
 
 }
 
-/* =========================================================
-   ACTIVE NAVIGATION LINK
-========================================================= */
+/* ==========================================================
+   ACTIVE NAVIGATION
+========================================================== */
 
-const sections = document.querySelectorAll("section");
-const navLinks = document.querySelectorAll(".nav-links a");
+function initActiveNavigation() {
 
-window.addEventListener("scroll", () => {
+    const sections = document.querySelectorAll("section");
 
-    let current = "";
+    const navLinks = document.querySelectorAll(".nav-links a");
 
-    sections.forEach(section => {
+    if (!sections.length || !navLinks.length) return;
 
-        const sectionTop = section.offsetTop - 120;
+    function updateNavigation() {
 
-        if (window.scrollY >= sectionTop) {
+        let current = "";
 
-            current = section.getAttribute("id");
+        sections.forEach(section => {
 
-        }
+            const offset = section.offsetTop - 140;
+
+            if (window.scrollY >= offset) {
+
+                current = section.id;
+
+            }
+
+        });
+
+        navLinks.forEach(link => {
+
+            link.classList.remove("active");
+
+            if (link.getAttribute("href") === "#" + current) {
+
+                link.classList.add("active");
+
+            }
+
+        });
+
+    }
+
+    updateNavigation();
+
+    window.addEventListener("scroll", updateNavigation);
+
+}
+
+/* ==========================================================
+   SCROLL PROGRESS BAR
+========================================================== */
+
+function initScrollProgress() {
+
+    const progress = document.querySelector(".scroll-progress");
+
+    if (!progress) return;
+
+    function updateProgress() {
+
+        const totalHeight =
+            document.documentElement.scrollHeight - window.innerHeight;
+
+        if (totalHeight <= 0) return;
+
+        const percentage =
+            (window.scrollY / totalHeight) * 100;
+
+        progress.style.width = percentage + "%";
+
+    }
+
+    updateProgress();
+
+    window.addEventListener("scroll", updateProgress);
+
+}
+
+/* ==========================================================
+   HERO PARALLAX
+========================================================== */
+
+function initHeroParallax() {
+
+    const hero = document.querySelector(".hero");
+
+    if (!hero) return;
+
+    window.addEventListener("scroll", () => {
+
+        const offset = window.scrollY * 0.3;
+
+        hero.style.backgroundPosition = `center ${offset}px`;
 
     });
 
-    navLinks.forEach(link => {
+}
 
-        link.classList.remove("active");
+/* ==========================================================
+   BUTTON RIPPLE EFFECT
+========================================================== */
 
-        if (link.getAttribute("href") === "#" + current) {
+function initButtonRipple() {
 
-            link.classList.add("active");
+    const buttons = document.querySelectorAll(
+        ".btn,.btn-primary,.btn-secondary"
+    );
 
-        }
+    if (!buttons.length) return;
+
+    buttons.forEach(button => {
+
+        button.addEventListener("click", function (e) {
+
+            const ripple = document.createElement("span");
+
+            const rect = this.getBoundingClientRect();
+
+            const size = Math.max(rect.width, rect.height);
+
+            ripple.style.width = size + "px";
+            ripple.style.height = size + "px";
+
+            ripple.style.left =
+                e.clientX - rect.left - size / 2 + "px";
+
+            ripple.style.top =
+                e.clientY - rect.top - size / 2 + "px";
+
+            ripple.className = "ripple";
+
+            this.appendChild(ripple);
+
+            setTimeout(() => {
+
+                ripple.remove();
+
+            }, 600);
+
+        });
 
     });
 
-});
+}
+
+/* ==========================================================
+   LAZY IMAGE FADE-IN
+========================================================== */
+
+function initLazyImages() {
+
+    const images = document.querySelectorAll("img[loading='lazy']");
+
+    if (!images.length) return;
+
+    const observer = new IntersectionObserver(entries => {
+
+        entries.forEach(entry => {
+
+            if (!entry.isIntersecting) return;
+
+            const image = entry.target;
+
+            image.classList.add("loaded");
+
+            observer.unobserve(image);
+
+        });
+
+    }, {
+
+        threshold: 0.15
+
+    });
+
+    images.forEach(image => {
+
+        observer.observe(image);
+
+    });
+
+}
+
+/* ==========================================================
+   THROTTLE
+========================================================== */
+
+function throttle(callback, delay) {
+
+    let waiting = false;
+
+    return function (...args) {
+
+        if (waiting) return;
+
+        callback.apply(this, args);
+
+        waiting = true;
+
+        setTimeout(() => {
+
+            waiting = false;
+
+        }, delay);
+
+    };
+
+}
+
+/* ==========================================================
+   DEBOUNCE
+========================================================== */
+
+function debounce(callback, delay) {
+
+    let timer;
+
+    return function (...args) {
+
+        clearTimeout(timer);
+
+        timer = setTimeout(() => {
+
+            callback.apply(this, args);
+
+        }, delay);
+
+    };
+
+}
+
+/* ==========================================================
+   WINDOW RESIZE
+========================================================== */
+
+window.addEventListener(
+
+    "resize",
+
+    debounce(() => {
+
+        console.log("Layout updated.");
+
+    }, 200)
+
+);
+
+/* ==========================================================
+   INITIALIZE OPTIONAL FEATURES
+========================================================== */
+
+initLazyImages();
+
+/* ==========================================================
+   END OF FILE
+========================================================== */
