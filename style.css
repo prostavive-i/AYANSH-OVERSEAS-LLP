@@ -1066,7 +1066,92 @@ grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
 .faq-item.active .faq-answer {
     display: block;
 }
+@media (max-width:576px){
 
+    .stat-number{
+        font-size:2.4rem;
+    }
+
+    .testimonial-card{
+        padding:25px;
+    }
+
+    .faq-question{
+        font-size:1rem;
+        padding:20px;
+    }
+
+    .faq-answer{
+        padding:0 20px 20px;
+    }
+
+}
+
+/* ==========================================================
+   RIPPLE EFFECT
+========================================================== */
+
+.btn,
+.btn-primary,
+.btn-secondary{
+    position:relative;
+    overflow:hidden;
+}
+
+.ripple{
+    position:absolute;
+    border-radius:50%;
+    transform:scale(0);
+    background:rgba(255,255,255,.35);
+    animation:ripple .6s linear;
+    pointer-events:none;
+}
+
+@keyframes ripple{
+
+    to{
+        transform:scale(4);
+        opacity:0;
+    }
+
+}
+
+/* ==========================================================
+   LAZY IMAGES
+========================================================== */
+
+img[loading="lazy"]{
+    opacity:0;
+    transform:translateY(20px);
+    transition:.6s ease;
+}
+
+img.loaded{
+    opacity:1;
+    transform:translateY(0);
+}
+
+/* ==========================================================
+   SCROLL PROGRESS BAR
+========================================================== */
+
+.scroll-progress{
+
+    position:fixed;
+
+    top:0;
+
+    left:0;
+
+    width:0;
+
+    height:4px;
+
+    background:#2563eb;
+
+    z-index:9999;
+
+}
 /* =========================================================
    CONTACT
 ========================================================= */
